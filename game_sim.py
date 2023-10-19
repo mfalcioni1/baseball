@@ -90,7 +90,6 @@ class Player:
             return "walk"
         else:
             return "out" # this need to be adjusted for productive outs
-        
 class Lineup:
     def __init__(self, players):
         self.players = players
@@ -154,35 +153,69 @@ class Lineup:
 
         return runs
 
-class Game:
-    def __init__(self, lineup):
+class Team:
+    def __init__(self, name, lineup: Lineup):
+        self.name = name
         self.lineup = lineup
-    
+        self.runs = 0
+
+    def simulate_inning(self):
+        self.lineup.simulate_inning()
+
+class Game:
+    def __init__(self, team1: Team, team2: Team):
+        self.team1 = team1
+        self.team2 = team2
+
     def simulate_game(self):
-        total_runs = 0
         for inning in range(9):  # A standard game has 9 innings
-            runs = self.lineup.simulate_inning()
-            total_runs += runs
-            print(f"Inning {inning + 1}: {runs} runs, Total: {total_runs} runs")
-        return total_runs
+            self.simulate_inning(inning)
+        
+        while self.team1.runs == self.team2.runs:  # Extra innings if tied
+            self.simulate_inning(inning)
+            inning += 1
+        
+        # Print or return the final score and winning team
+        if self.team1.runs > self.team2.runs:
+            winner = self.team1.name
+        else:
+            winner = self.team2.name
+        
+        print(f"Final Score: {self.team1.name} {self.team1.runs}, {self.team2.name} {self.team2.runs}")
+        print(f"Winner: {winner}")
+
+    def simulate_inning(self, inning):
+        print(f"Inning {inning + 1}:")
+        
+        runs_team1 = self.team1.simulate_inning()
+        self.team1.runs += runs_team1
+        print(f"{self.team1.name} scored {runs_team1} runs. Total: {self.team1.runs} runs")
+        
+        runs_team2 = self.team2.simulate_inning()
+        self.team2.runs += runs_team2
+        print(f"{self.team2.name} scored {runs_team2} runs. Total: {self.team2.runs} runs\n")
 
 if __name__ == "__main__":
+    pass
     # Creating players with name and statistics
-    player1 = Player("Player1", 300, 90, 60, 20, 5, 5, 30, 50, 5, 5, 5, 10, 5)
-    player2 = Player("Player2", 310, 93, 63, 20, 5, 5, 32, 48, 5, 5, 5, 11, 5)
-    player3 = Player("Player3", 320, 96, 66, 20, 5, 5, 34, 46, 5, 5, 5, 12, 5)
-    player4 = Player("Player4", 330, 99, 69, 20, 5, 5, 36, 44, 5, 5, 5, 13, 5)
-    player5 = Player("Player5", 340, 102, 72, 20, 5, 5, 38, 42, 5, 5, 5, 14, 5)
-    player6 = Player("Player6", 350, 105, 75, 20, 5, 5, 40, 40, 5, 5, 5, 15, 5)
-    player7 = Player("Player7", 360, 108, 78, 20, 5, 5, 42, 38, 5, 5, 5, 16, 5)
-    player8 = Player("Player8", 370, 111, 81, 20, 5, 5, 44, 36, 5, 5, 5, 17, 5)
-    player9 = Player("Player9", 380, 114, 84, 20, 5, 5, 46, 34, 5, 5, 5, 18, 5)
+    # player1 = Player("Player1", 300, 90, 60, 20, 5, 5, 30, 50, 5, 5, 5, 10, 5)
+    # player2 = Player("Player2", 310, 93, 63, 20, 5, 5, 32, 48, 5, 5, 5, 11, 5)
+    # player3 = Player("Player3", 320, 96, 66, 20, 5, 5, 34, 46, 5, 5, 5, 12, 5)
+    # player4 = Player("Player4", 330, 99, 69, 20, 5, 5, 36, 44, 5, 5, 5, 13, 5)
+    # player5 = Player("Player5", 340, 102, 72, 20, 5, 5, 38, 42, 5, 5, 5, 14, 5)
+    # player6 = Player("Player6", 350, 105, 75, 20, 5, 5, 40, 40, 5, 5, 5, 15, 5)
+    # player7 = Player("Player7", 360, 108, 78, 20, 5, 5, 42, 38, 5, 5, 5, 16, 5)
+    # player8 = Player("Player8", 370, 111, 81, 20, 5, 5, 44, 36, 5, 5, 5, 17, 5)
+    # player9 = Player("Player9", 380, 114, 84, 20, 5, 5, 46, 34, 5, 5, 5, 18, 5)
 
-    # Creating a lineup
-    lineup = Lineup([player1, player2, player3, player4, player5, player6, player7, player8, player9])
+    # # Creating a lineup
+    # lineup1 = Lineup([player1, player2, player3, player4, player5, player6, player7, player8, player9])
 
-    # Simulating a game
-    game = Game(lineup)
-    total_runs = game.simulate_game()
 
-    print(f"\nTotal runs scored in the game: {total_runs}")
+    # # Creating teams
+    # team1 = Team("Team1", lineup1)
+    # team2 = Team("Team2", lineup2)
+
+    # # Simulating a game
+    # game = Game(team1, team2)
+    # game.simulate_game()
