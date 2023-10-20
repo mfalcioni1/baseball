@@ -1,9 +1,14 @@
-from pybaseball import statcast, statcast_batter, batting_stats_bref
+from pybaseball import statcast, statcast_batter, batting_stats_bref, team_game_logs
+
+batting_logs = team_game_logs(2023, "PHI", "batting")
 
 # Fetch Game Data
-game_data = statcast('2023-10-17', '2023-10-17', team='PHI')
+game_data = statcast('2023-10-17', '2023-10-17')
 
-lineup = game_data['batter'].unique()
+# filter to team
+team_data = game_data[(game_data['home_team'] == 'PHI') | (game_data['away_team'] == 'PHI')]
+
+lineup = team_data['batter'].unique()
 
 # Fetch Player Data
 # pitch-by-pitch data
