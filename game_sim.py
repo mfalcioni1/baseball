@@ -162,56 +162,60 @@ class Team:
         return self.lineup.simulate_inning()
 
 class Game:
-    def __init__(self, team1: Team, team2: Team):
+    def __init__(self, team1: Team, team2: Team, iterations: int):
         self.team1 = team1
         self.team2 = team2
-        self.team1.runs = 0
-        self.team2.runs = 0
+        self.iterations = iterations
+        self.iteration_log = pd.DataFrame()
 
-    def simulate_game(self):
-        for inning in range(9):  # A standard game has 9 innings
-            self.simulate_inning(inning)
-        
-        while self.team1.runs == self.team2.runs:  # Extra innings if tied
-            self.simulate_inning(inning)
-            inning += 1
-        
-        # Print or return the final score and winning team
-        if self.team1.runs > self.team2.runs:
-            winner = self.team1.name
-        else:
-            winner = self.team2.name
-        
-        print(f"Final Score: {self.team1.name} {self.team1.runs}, {self.team2.name} {self.team2.runs}")
-        print(f"Winner: {winner}")
-        return pd.DataFrame({'Team': [self.team1.name, self.team2.name], 'Runs': [self.team1.runs, self.team2.runs]})
-    
     def simulate_inning(self, inning):
-        print(f"Inning {inning + 1}:")
         
         runs_team1 = self.team1.simulate_inning()
         self.team1.runs += runs_team1
-        print(f"{self.team1.name} scored {runs_team1} runs. Total: {self.team1.runs} runs")
         
         runs_team2 = self.team2.simulate_inning()
         self.team2.runs += runs_team2
-        print(f"{self.team2.name} scored {runs_team2} runs. Total: {self.team2.runs} runs\n")
+
+    def simulate_game(self):
+        all_iterations_data = []
+        for iteration in range(self.iterations):
+            self.team1.runs = 0
+            self.team2.runs = 0
+            for inning in range(9):  # A standard game has 9 innings
+                self.simulate_inning(inning)
+
+            while self.team1.runs == self.team2.runs:  # Extra innings if tied
+                self.simulate_inning(inning)
+                inning += 1
+
+            iteration_data = {
+                'Iteration': iteration + 1,
+                f'{self.team1.name} Runs': self.team1.runs,
+                f'{self.team2.name} Runs': self.team2.runs,
+                'Winner': self.team1.name if self.team1.runs > self.team2.runs else self.team2.name
+            }
+            all_iterations_data.append(iteration_data)
+        
+        self.iteration_log = pd.DataFrame(all_iterations_data)
+        
+        average_score_team1 = self.iteration_log[f'{self.team1.name} Runs'].mean()
+        average_score_team2 = self.iteration_log[f'{self.team2.name} Runs'].mean()
+        
+        return {self.team1.name: average_score_team1, self.team2.name: average_score_team2}, self.iteration_log
 
 if __name__ == "__main__":
     import lineup as lu
     import argparse
     parser = argparse.ArgumentParser()
-    #parser.add_argument("date", help="The date of the game to simulate in the format YYYY-MM-DD")
-    #parser.add_argument("team", help="The three-letter abbreviation of the team to simulate")
-    parser.add_argument("-s", "--sims", help="The number of simulations to run", type=int, default=10)
+    parser.add_argument("-d", "--date", help="The date of the game to simulate in the format YYYY-MM-DD", default='2023-10-17')
+    parser.add_argument("-t", "--team", help="The three-letter abbreviation of the team to simulate", default='PHI')
+    parser.add_argument("-s", "--sims", help="The number of simulations to run", type=int, default=100)
     args = parser.parse_args()
 
-    #date = args.date
-    #team_abbr = args.team
+    date = args.date
+    team_abbr = args.team
     sims = args.sims
 
-    date = '2023-10-17'
-    team_abbr = 'PHI'
     team_lineup, opp_lineup = lu.get_lineups(date, team_abbr)
 
     lineup_l_1 = []
@@ -232,12 +236,7 @@ if __name__ == "__main__":
     team1 = Team(team_lineup["Tm"][0], lineup1)
     team2 = Team(opp_lineup["Tm"][0], lineup2)
 
-    sim_res = []
-    for i in range(sims):
-        game = Game(team1, team2)
-        sim_res.append(game.simulate_game())
-    
-    # return average score
-    sim_res = pd.concat(sim_res)
-    sim_res = sim_res.groupby('Team').mean()
-    print(sim_res)
+    game = Game(team1, team2, sims)
+    ave_scores, iter_log = game.simulate_game()
+    print(ave_scores)
+    print(iter_log['Winner'].value_counts())
