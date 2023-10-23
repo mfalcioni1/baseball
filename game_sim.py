@@ -1,5 +1,6 @@
 import random
 import pandas as pd
+from typing import Union
 
 class Player:
     def __init__(self, 
@@ -90,7 +91,15 @@ class Player:
         else:
             return "out" # this need to be adjusted for productive outs
 class Lineup:
-    def __init__(self, players):
+    def __init__(self, players: Union[list, pd.DataFrame]):
+        # player can be a list of Player objects or a dataframe
+        # if it is a dataframe then we create a list of Player objects
+        if isinstance(players, pd.DataFrame):
+            players = [Player(row['Name'], row['AB'], row['H'], row['2B'], row['3B'], 
+                              row['HR'], row['BB'], row['SO'], row['SF'], row['SH'], 
+                              row['GDP'], row['SB'], row['CS']) for _, row in players.iterrows()]
+        else:
+            assert all(isinstance(player, Player) for player in players), "players must be a list of Player objects"
         self.players = players
     
     def simulate_inning(self):
@@ -217,24 +226,11 @@ if __name__ == "__main__":
     sims = args.sims
 
     team_lineup, opp_lineup = lu.get_lineups(date, team_abbr)
-
-    lineup_l_1 = []
-    for row in team_lineup.iterrows():
-        row = row[1]
-        lineup_l_1.append(Player(row['Name'], row['AB'], row['H'], row['2B'], row['3B'], 
-                                 row['HR'], row['BB'], row['SO'], row['SF'], row['SH'], 
-                                 row['GDP'], row['SB'], row['CS']))
-    lineup_l_2 = []
-    for row in opp_lineup.iterrows():
-        row = row[1]
-        lineup_l_2.append(Player(row['Name'], row['AB'], row['H'], row['2B'], row['3B'], 
-                                 row['HR'], row['BB'], row['SO'], row['SF'], row['SH'], 
-                                 row['GDP'], row['SB'], row['CS']))
     
-    lineup1 = Lineup(lineup_l_1)
-    lineup2 = Lineup(lineup_l_2)
-    team1 = Team(team_lineup["Tm"][0], lineup1)
-    team2 = Team(opp_lineup["Tm"][0], lineup2)
+    lineup1 = Lineup(team_lineup)
+    lineup2 = Lineup(opp_lineup)
+    team1 = Team(team_lineup["Tm"].iloc[0], lineup1)
+    team2 = Team(opp_lineup["Tm"].iloc[0], lineup2)
 
     game = Game(team1, team2, sims)
     ave_scores, iter_log = game.simulate_game()

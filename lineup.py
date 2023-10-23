@@ -3,17 +3,15 @@ from pybaseball import statcast, batting_stats_bref
 
 def get_lineups(date, team_abbr):
     # Fetch Game Data
-    game_data = statcast(date, date)
+    game_data = statcast(date, date) #this call needs to be improved, inefficient when there are many games.
 
     game_data = game_data[(game_data['home_team'] == team_abbr) | (game_data['away_team'] == team_abbr)]
 
     # Determine Opposing Team
-    if game_data['home_team'][0] == team_abbr:
-        opp_team_abbr = game_data['away_team'][0]
+    if game_data['home_team'].iloc[0] == team_abbr:
         team_data = game_data[game_data['inning_topbot'] == 'Bot']
         opp_team_data = game_data[game_data['inning_topbot'] == 'Top']
     else:
-        opp_team_abbr = game_data['home_team'][0]
         team_data = game_data[game_data['inning_topbot'] == 'Top']
         opp_team_data = game_data[game_data['inning_topbot'] == 'Bot']
 
