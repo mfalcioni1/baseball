@@ -187,6 +187,7 @@ class Game:
 
     def simulate_game(self):
         all_iterations_data = []
+        wins_team1 = 0
         for iteration in range(self.iterations):
             self.team1.runs = 0
             self.team2.runs = 0
@@ -204,13 +205,35 @@ class Game:
                 'Winner': self.team1.name if self.team1.runs > self.team2.runs else self.team2.name
             }
             all_iterations_data.append(iteration_data)
+
+            if self.team1.runs > self.team2.runs:
+                wins_team1 += 1
         
         self.iteration_log = pd.DataFrame(all_iterations_data)
         
         average_score_team1 = self.iteration_log[f'{self.team1.name} Runs'].mean()
         average_score_team2 = self.iteration_log[f'{self.team2.name} Runs'].mean()
         
-        return {self.team1.name: average_score_team1, self.team2.name: average_score_team2}, self.iteration_log
+        std_dev_team1 = round(self.iteration_log[f'{self.team1.name} Runs'].std(), 2)
+        std_dev_team2 = round(self.iteration_log[f'{self.team2.name} Runs'].std(), 2)
+        
+        win_prob_team1 = round(wins_team1 / self.iterations, 4)
+        win_prob_team2 = 1 - win_prob_team1
+        
+        output_dict = {
+            self.team1.name: {
+                'Average Score': average_score_team1,
+                'Standard Deviation': std_dev_team1,
+                'Win Probability': win_prob_team1
+            },
+            self.team2.name: {
+                'Average Score': average_score_team2,
+                'Standard Deviation': std_dev_team2,
+                'Win Probability': win_prob_team2
+            }
+        }
+        
+        return output_dict, self.iteration_log
 
 if __name__ == "__main__":
     import lineup as lu

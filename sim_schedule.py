@@ -32,17 +32,26 @@ if __name__ == '__main__':
     schedule = get_schedule(team_abbr, year)
     print(schedule)
     schedule[['Date', 'Game_Number']] = schedule['Date'].apply(lambda x: parse_date(x, year)).apply(pd.Series)
-
     # 2020-08-09 PHI is a double-header
-
+    sim_result = pd.DataFrame()
     for _, game in schedule.iterrows():
         team_lineup, opp_lineup = lu.get_lineups(game['Date'], team_abbr)
         obj_tl = gs.Lineup(team_lineup)
         obj_ol = gs.Lineup(opp_lineup)
         team = gs.Team(game['Tm'], obj_tl)
         opp_team = gs.Team(game['Opp'], obj_ol)
-        game = gs.Game(team, opp_team, 100)
-        ave_scores, iter_log = game.simulate_game()
-        # merge the average scores with the schedule
-        # TODO: YOU ARE HERE, need to figure out how to append the average scores to the schedule
-        schedule = pd.merge(schedule, ave_scores, left_on='Date', right_index=True)
+        game_obj = gs.Game(team, opp_team, 100)
+        ave_scores, iter_log = game_obj.simulate_game()
+        # Convert simulation result dictionary to DataFrame
+        tm = game['Tm']
+        opp = game['Opp']
+        df = pd.DataFrame({'Date': [game['Date']],
+                           'Tm': [tm], 
+                           'Opp': [opp], 
+                           'Tm_ave_score': [ave_scores[tm]['Average Score']],
+                           'Tm_sd_score': [ave_scores[tm]['Standard Deviation']],
+                           'Tm_win_prob': [ave_scores[tm]['Win Probability']],
+                           'Opp_ave_score': [ave_scores[opp]['Average Score']],
+                           'Opp_sd_score': [ave_scores[opp]['Standard Deviation']]})
+        
+        sim_result = pd.concat([sim_result, df], ignore_index=True)
